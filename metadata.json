@@ -1,0 +1,6 @@
+{
+  "name": "FormPulse",
+  "description": "Mobile-first forms builder and responder with gesture-driven data entry, offline submission queueing, and real-time response visualization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

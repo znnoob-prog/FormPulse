@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">FormPulse</string>
+    <string name="tagline">Gesture-first forms, offline sync, and live response charts</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_out">Sign out</string>
+    <string name="my_forms">My Forms</string>
+    <string name="create_form">New Form</string>
+    <string name="offline_mode">Offline Mode</string>
+    <string name="online_synced">Live Synced</string>
+    <string name="queued_offline">Queued Offline</string>
+    <string name="respond_now">Respond</string>
+    <string name="live_charts">Responses</string>
+    <string name="edit_form">Edit</string>
+    <string name="submit_response">Submit Response</string>
+    <string name="empty_forms_title">No forms yet</string>
+    <string name="empty_forms_subtitle">Build a custom form or start with a mobile-ready template.</string>
+</resources>

@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidFormDefinition(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 120 &&
+             data.description is string &&
+             data.description.size() <= 500 &&
+             data.category in ['SURVEY', 'FEEDBACK', 'EVENT', 'QUIZ', 'CHECKLIST'] &&
+             data.accentColorKey in ['INDIGO', 'MINT', 'CORAL', 'AMBER'] &&
+             data.acceptingResponses is bool &&
+             data.questions is list &&
+             data.questions.size() >= 1 &&
+             data.questions.size() <= 25 &&
+             data.questions[0] is map &&
+             data.responseCount is int &&
+             data.responseCount >= 0 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidFormResponse(data, userId, formId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.formId is string &&
+             data.formId == formId &&
+             data.respondentName is string &&
+             data.respondentName.size() <= 80 &&
+             data.answers is list &&
+             data.answers.size() >= 1 &&
+             data.answers.size() <= 25 &&
+             data.answers[0] is map &&
+             data.completionSeconds is int &&
+             data.completionSeconds >= 0 &&
+             data.completionSeconds <= 86400 &&
+             data.submittedOffline is bool &&
+             data.submittedAt is timestamp &&
+             data.submittedAt <= request.time;
+    }
+
+    match /users/{userId}/forms/{formId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(formId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(formId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'description', 'category',
+                         'accentColorKey', 'acceptingResponses', 'questions',
+                         'responseCount', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'description', 'category',
+                         'accentColorKey', 'acceptingResponses', 'questions',
+                         'responseCount', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidFormDefinition(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(formId) &&
+                       isValidFormDefinition(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'description', 'category', 'accentColorKey',
+                           'acceptingResponses', 'questions', 'responseCount', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(formId);
+
+      match /responses/{responseId} {
+        allow list: if isOwner(userId) && isValidId(formId);
+        allow get: if isOwner(userId) && isValidId(formId) && isValidId(responseId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(formId) &&
+                         isValidId(responseId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'formId', 'respondentName', 'answers',
+                           'completionSeconds', 'submittedOffline', 'submittedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'formId', 'respondentName', 'answers',
+                           'completionSeconds', 'submittedOffline', 'submittedAt'
+                         ]) &&
+                         isValidFormResponse(incoming(), userId, formId) &&
+                         exists(/databases/$(database)/documents/users/$(userId)/forms/$(formId));
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(formId) && isValidId(responseId);
+      }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "FormDefinition": {
+      "title": "FormDefinition",
+      "description": "A mobile-first form containing ordered interactive questions and response counters.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID matching Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the form (1-120 chars)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Subtitle or instructions for responders (0-500 chars)."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["SURVEY", "FEEDBACK", "EVENT", "QUIZ", "CHECKLIST"],
+          "description": "Form category tag."
+        },
+        "accentColorKey": {
+          "type": "string",
+          "enum": ["INDIGO", "MINT", "CORAL", "AMBER"],
+          "description": "Theme accent color key for the form header."
+        },
+        "acceptingResponses": {
+          "type": "boolean",
+          "description": "Whether new submissions are currently enabled."
+        },
+        "questions": {
+          "type": "array",
+          "description": "Ordered list of 1 to 25 question maps (id, prompt, type, required, options, scaleMin, scaleMax, minLabel, maxLabel)."
+        },
+        "responseCount": {
+          "type": "integer",
+          "description": "Denormalized count of submitted responses incremented atomically."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "description",
+        "category",
+        "accentColorKey",
+        "acceptingResponses",
+        "questions",
+        "responseCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FormResponse": {
+      "title": "FormResponse",
+      "description": "A submitted form response containing structured answers and timing/offline telemetry.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID matching the parent user scope."
+        },
+        "formId": {
+          "type": "string",
+          "description": "Parent form document ID."
+        },
+        "respondentName": {
+          "type": "string",
+          "description": "Optional respondent display label (0-80 chars)."
+        },
+        "answers": {
+          "type": "array",
+          "description": "List of 1 to 25 answer maps (questionId, questionType, textValue, numericValue, selectedOptions)."
+        },
+        "completionSeconds": {
+          "type": "integer",
+          "description": "Duration in seconds taken to complete the form (0-86400)."
+        },
+        "submittedOffline": {
+          "type": "boolean",
+          "description": "True if queued while network was offline before syncing."
+        },
+        "submittedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp written via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "formId",
+        "respondentName",
+        "answers",
+        "completionSeconds",
+        "submittedOffline",
+        "submittedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/forms/{formId}": {
+      "schema": { "$ref": "#/entities/FormDefinition" },
+      "description": "User-owned interactive forms."
+    },
+    "/users/{userId}/forms/{formId}/responses/{responseId}": {
+      "schema": { "$ref": "#/entities/FormResponse" },
+      "description": "Submitted responses scoped under a specific form."
+    }
+  }
+}
